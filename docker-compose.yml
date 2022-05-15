@@ -1,0 +1,9 @@
+version: '2'
+
+services:
+  ytap-python:
+    build: .
+    environment:
+      - BOT_TOKEN=<place_your_token_here>
+    container_name: ytap-python
+    restart: always
