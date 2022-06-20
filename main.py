@@ -35,10 +35,10 @@ def preflight():
 
 def download_video(id, url):
     """
-    Download video in the worst possible format
+    Download video in the worst possible format and get video name
     :param url: youtube video url
     :param id: generated id for a file
-    :return: exit code of youtube-dl, filename
+    :return: name of the video
     """
     video_filename = f"/tmp/video-{id}.mp4"
     cmd_download = f"youtube-dl --newline -f worst {url} -o {video_filename}"
@@ -69,6 +69,9 @@ def get_audio_from_video(id):
 
 
 def cleanup(id):
+    """
+    Remove temp audio and video files
+    """
     video_filename = f"/tmp/video-{id}.mp4"
     audio_filename = f"/tmp/audio-{id}.mp3"
     if os.path.isfile(video_filename) and os.path.isfile(audio_filename):
