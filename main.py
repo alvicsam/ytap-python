@@ -13,6 +13,7 @@ logging.basicConfig(
     level=logging.DEBUG, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 )
 
+SAMPLE = "https://www.youtube.com/watch?v=ONj9cvHCado"
 TOKEN = os.getenv("BOT_TOKEN")
 
 
@@ -33,12 +34,12 @@ def preflight():
         exit(1)
 
 
-def download_video(id, url):
+def download_video(id, url=SAMPLE):
     """
-    Download video in the worst possible format and get video name
+    Download video in the worst possible format
     :param url: youtube video url
     :param id: generated id for a file
-    :return: name of the video
+    :return: exit code of youtube-dl, filename
     """
     video_filename = f"/tmp/video-{id}.mp4"
     cmd_download = f"youtube-dl --newline -f worst {url} -o {video_filename}"
@@ -69,9 +70,6 @@ def get_audio_from_video(id):
 
 
 def cleanup(id):
-    """
-    Remove temp audio and video files
-    """
     video_filename = f"/tmp/video-{id}.mp4"
     audio_filename = f"/tmp/audio-{id}.mp3"
     if os.path.isfile(video_filename) and os.path.isfile(audio_filename):
@@ -86,6 +84,13 @@ def is_youtube_url(text):
     if "https://www.youtube.com" or "https://m.youtube.com" in text:
         return True
     return False
+
+
+def calculate_file_size(filepath: str) -> int:
+    """
+    Returns filesize in MB
+    """
+    return os.stat(filepath).st_size / (1024 * 1024)
 
 
 def main():
@@ -105,9 +110,19 @@ def main():
                 id = id_generator()
                 video_name = download_video(id, message)
                 get_audio_from_video(id)
-                bot.send_audio(
-                    user_id, audio=open(f"/tmp/audio-{id}.mp3", "rb"), title=video_name
-                )
+                # Telegram doesn't support media files > 50 MB for bots to send
+                filesize = calculate_file_size(f"/tmp/audio-{id}.mp3")
+                if filesize < 50:
+                    bot.send_audio(
+                        user_id,
+                        audio=open(f"/tmp/audio-{id}.mp3", "rb"),
+                        title=video_name,
+                    )
+                else:
+                    bot.send_message(
+                        user_id,
+                        f"Sorry, the audio file is too big ({filesize} MB). I don't know how to split audio files yet.",
+                    )
                 cleanup(id)
             else:
                 logging.info(f"Got a message: {message}")
