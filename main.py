@@ -88,6 +88,13 @@ def is_youtube_url(text):
     return False
 
 
+def calculate_file_size(filepath: str) -> int:
+    """
+    Returns filesize in MB
+    """
+    return os.stat(filepath).st_size / (1024 * 1024)
+
+
 def main():
     preflight()
     bot = telegram.Bot(TOKEN)
@@ -105,9 +112,19 @@ def main():
                 id = id_generator()
                 video_name = download_video(id, message)
                 get_audio_from_video(id)
-                bot.send_audio(
-                    user_id, audio=open(f"/tmp/audio-{id}.mp3", "rb"), title=video_name
-                )
+                # Telegram doesn't support media files > 50 MB for bots to send
+                filesize = calculate_file_size(f"/tmp/audio-{id}.mp3")
+                if filesize < 50:
+                    bot.send_audio(
+                        user_id,
+                        audio=open(f"/tmp/audio-{id}.mp3", "rb"),
+                        title=video_name,
+                    )
+                else:
+                    bot.send_message(
+                        user_id,
+                        f"Sorry, the audio file is too big ({filesize} MB). I don't know how to split audio files yet.",
+                    )
                 cleanup(id)
             else:
                 logging.info(f"Got a message: {message}")
