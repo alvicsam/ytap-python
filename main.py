@@ -13,7 +13,6 @@ logging.basicConfig(
     level=logging.DEBUG, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 )
 
-SAMPLE = "https://www.youtube.com/watch?v=ONj9cvHCado"
 TOKEN = os.getenv("BOT_TOKEN")
 
 
@@ -34,7 +33,7 @@ def preflight():
         exit(1)
 
 
-def download_video(id, url=SAMPLE):
+def download_video(id, url):
     """
     Download video in the worst possible format
     :param url: youtube video url
