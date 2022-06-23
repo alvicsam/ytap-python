@@ -6,6 +6,8 @@ import string
 import subprocess
 import telegram
 import os
+import json
+import datetime
 
 from time import sleep
 
@@ -95,6 +97,33 @@ def calculate_file_size(filepath: str) -> int:
     return os.stat(filepath).st_size / (1024 * 1024)
 
 
+def get_audio_duration(audiofile):
+    cmd = f"ffprobe -v quiet -print_format json -show_format -show_streams -print_format json {audiofile} | tr -d '\n'"
+    try:
+        full_audio_info_raw = subprocess.run(
+            cmd, capture_output=True, text=True, shell=True
+        )
+        full_audio_info = json.loads(full_audio_info_raw.stdout)
+        duration = full_audio_info["format"]["duration"]
+    except Exception as e:
+        logging.error(f"Something went wrong with getting audio from video: {e}")
+        exit(1)
+    return int(float(duration))
+
+
+def divide_file_into_parts(number_of_parts, duration, id):
+    duration_of_one_part = duration // number_of_parts
+    for i in range(0, number_of_parts):
+        t1 = str(datetime.timedelta(seconds=i * int(duration_of_one_part)))
+        t2 = str(datetime.timedelta(seconds=(i + 1) * int(duration_of_one_part)))
+        cmd = f"ffmpeg -i /tmp/audio-{id}.mp3 -ss {t1} -to {t2} -c copy /tmp/audio-{id}_part{i}.mp3"
+        try:
+            code = subprocess.run(cmd.split())
+        except Exception as e:
+            logging.error(f"Something went wrong with splitting audio: {e}")
+            exit(1)
+
+
 def main():
     preflight()
     bot = telegram.Bot(TOKEN)
@@ -111,9 +140,10 @@ def main():
                 bot.send_message(user_id, "Preparing video")
                 id = id_generator()
                 video_name = download_video(id, message)
+                audiofile = f"/tmp/audio-{id}.mp3"
                 get_audio_from_video(id)
                 # Telegram doesn't support media files > 50 MB for bots to send
-                filesize = calculate_file_size(f"/tmp/audio-{id}.mp3")
+                filesize = calculate_file_size(audiofile)
                 if filesize < 50:
                     bot.send_audio(
                         user_id,
@@ -121,10 +151,15 @@ def main():
                         title=video_name,
                     )
                 else:
-                    bot.send_message(
-                        user_id,
-                        f"Sorry, the audio file is too big ({filesize} MB). I don't know how to split audio files yet.",
-                    )
+                    number_of_parts = int(filesize // 45 + 1)
+                    audio_duration = get_audio_duration(audiofile)
+                    divide_file_into_parts(number_of_parts, audio_duration, id)
+                    for i in range(0, number_of_parts):
+                        bot.send_audio(
+                            user_id,
+                            audio=open(f"/tmp/audio-{id}_part{i}.mp3", "rb"),
+                            title=video_name,
+                        )
                 cleanup(id)
             else:
                 logging.info(f"Got a message: {message}")
