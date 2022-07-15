@@ -135,6 +135,11 @@ def main():
             message_id = updates[i]["update_id"]
             message = updates[i]["message"]["text"]
             print(f"User id: {user_id}, message: {message}, message id: {message_id}")
+            if message in "/start":
+                bot.send_message(
+                    user_id,
+                    "Hi! Just send me a youtube link and I'll send you an audio from it",
+                )            
             if is_youtube_url(message):
                 logging.info(f"Got a youtube link {message}")
                 bot.send_message(user_id, "Preparing video")
