@@ -85,7 +85,7 @@ def cleanup(id):
 
 
 def is_youtube_url(text):
-    if "https://www.youtube.com" or "https://m.youtube.com" in text:
+    if "https://www.youtube.com" in text or "https://m.youtube.com" in text:
         return True
     return False
 
