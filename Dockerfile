@@ -13,7 +13,7 @@ RUN apt-get update && apt-get install -y curl; \
     groupadd -g 10000 nonroot && \
     useradd -u 10000 -g 10000 -s /bin/bash -m nonroot
 
-COPY ./main.py /app/main.py
+COPY ./app/main.py /app/main.py
 
 USER nonroot:nonroot
 CMD ["python3", "/app/main.py"]
