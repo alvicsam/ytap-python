@@ -49,7 +49,7 @@ def download_video(id, url):
     :return: name of the video
     """
     video_filename = f"/tmp/video-{id}.mp4"
-    cmd_download = f"youtube-dl --newline -f worst {url} -o {video_filename}"
+    cmd_download = f"youtube-dl --newline -f bestaudio[ext=m4a] {url} -o {video_filename}"
     cmd_name = f"youtube-dl --skip-download --get-title --no-warnings {url}"
     try:
         code = subprocess.run(cmd_download.split())
