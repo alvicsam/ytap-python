@@ -49,16 +49,20 @@ def download_video(id, url):
     :return: name of the video
     """
     video_filename = f"/tmp/video-{id}.mp4"
-    cmd_download = f"youtube-dl --newline -f bestaudio[ext=m4a] {url} -o {video_filename}"
+    cmd_download = (
+        f"youtube-dl --newline -f bestaudio[ext=m4a] {url} -o {video_filename}"
+    )
     cmd_name = f"youtube-dl --skip-download --get-title --no-warnings {url}"
     try:
         code = subprocess.run(cmd_download.split())
         video_name = subprocess.run(
             cmd_name, capture_output=True, text=True, shell=True
         )
-    except Exception as e:
+        logging.info(f"video_name")
+        code.check_returncode()
+    except subprocess.CalledProcessError as e:
         logging.error(f"Something went wrong with downloading video: {e}")
-        exit(1)
+        return "fail"
     return video_name.stdout.strip()
 
 
@@ -70,10 +74,19 @@ def get_audio_from_video(id):
     cmd = f"ffmpeg -i /tmp/video-{id}.mp4 -q:a 0 -map a {audio_filename}"
     try:
         code = subprocess.run(cmd.split())
-    except Exception as e:
+        code.check_returncode()
+    except subprocess.CalledProcessError as e:
         logging.error(f"Something went wrong with getting audio from video: {e}")
-        exit(1)
+        return "fail", "fail"
     return code, audio_filename
+
+
+def graceful_fail(bot, message_id, user_id):
+    bot.send_message(
+        user_id,
+        f"Couldn't download this video, sorry",
+    )
+    bot.get_updates(offset=message_id + 1)
 
 
 def cleanup(id):
@@ -87,7 +100,6 @@ def cleanup(id):
         os.remove(audio_filename)
     else:
         logging.error(f"Error: couldn't find audio/video file")
-    pass
 
 
 def is_youtube_url(text):
@@ -178,8 +190,17 @@ def main():
                 logging.info(f"Trimmed link to {link}")
                 id = id_generator()
                 video_name = download_video(id, link)
+                if video_name == "fail":
+                    logging.error("video_name failed")
+                    graceful_fail(bot, message_id, user_id)
+                    continue
                 audiofile = f"/tmp/audio-{id}.mp3"
-                get_audio_from_video(id)
+                audio_result = get_audio_from_video(id)
+                logging.info(f"audio result: {audio_result}")
+                if audio_result[0] == "fail":
+                    logging.error("get_audio_from_video failed")
+                    graceful_fail(bot, message_id, user_id)
+                    continue
                 # Telegram doesn't support media files > 50 MB for bots to send
                 filesize = calculate_file_size(audiofile)
                 if filesize < 50:
@@ -205,6 +226,8 @@ def main():
                         )
                 cleanup(id)
             else:
+                if message in "/start":
+                    continue
                 bot.send_message(
                     user_id,
                     f"Couldn't find a youtube link in your message: {message}",
