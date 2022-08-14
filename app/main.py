@@ -31,16 +31,6 @@ def id_generator(size=6, chars=string.ascii_uppercase + string.digits):
     return "".join(random.choice(chars) for _ in range(size))
 
 
-def preflight():
-    """
-    Check the requirements
-    """
-    youtubedl_exists = os.path.exists("/usr/local/bin/youtube-dl")
-    if not youtubedl_exists:
-        print("Please install youtube-dl, exiting")
-        exit(1)
-
-
 def download_video(id, url):
     """
     Download video in the worst possible format and get video name
@@ -49,10 +39,8 @@ def download_video(id, url):
     :return: name of the video
     """
     video_filename = f"/tmp/video-{id}.mp4"
-    cmd_download = (
-        f"youtube-dl --newline -f bestaudio[ext=m4a] {url} -o {video_filename}"
-    )
-    cmd_name = f"youtube-dl --skip-download --get-title --no-warnings {url}"
+    cmd_download = f"yt-dlp --newline -f bestaudio[ext=m4a] {url} -o {video_filename}"
+    cmd_name = f"yt-dlp --skip-download --get-title --no-warnings {url}"
     try:
         code = subprocess.run(cmd_download.split())
         video_name = subprocess.run(
@@ -170,7 +158,6 @@ def divide_audio_into_parts(number_of_parts, duration, id):
 
 
 def main():
-    preflight()
     logging.info(f"YTAP-Bot has started")
     bot = telegram.Bot(TOKEN)
     message_id = 0

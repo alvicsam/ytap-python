@@ -1,1 +1,2 @@
 python-telegram-bot==13.11
+yt-dlp==2022.8.8
