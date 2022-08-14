@@ -2,14 +2,16 @@ FROM docker.io/library/python:slim-buster
 
 WORKDIR /app
 
-RUN apt-get update && apt-get install -y curl; \
-    curl -L https://yt-dl.org/downloads/latest/youtube-dl -o /usr/local/bin/youtube-dl; \
-    chmod +x /usr/local/bin/youtube-dl; \
-    apt install ffmpeg -y; \
-    apt-get autoremove -y ; \
-    apt-get clean ; \
-    rm -rf /var/lib/apt/lists/*; \
-    pip install python-telegram-bot; \
+COPY requirements.txt /app/requirements.txt
+
+RUN apt-get update && apt-get install -y curl &&  \
+    curl -L https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp -o /usr/local/bin/yt-dlp &&  \
+    chmod a+rx /usr/local/bin/yt-dlp &&  \
+    apt install ffmpeg -y &&  \
+    apt-get autoremove -y  &&  \
+    apt-get clean  &&  \
+    rm -rf /var/lib/apt/lists/* &&  \
+    pip install -r requirements.txt &&  \
     groupadd -g 10000 nonroot && \
     useradd -u 10000 -g 10000 -s /bin/bash -m nonroot
 

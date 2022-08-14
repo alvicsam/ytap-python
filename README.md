@@ -2,7 +2,7 @@
 
 Telegram bot which converts youtube video to telegram audio.
 
-Uses python3, [youtube-dl](https://github.com/ytdl-org/youtube-dl), [ffmpeg](https://github.com/FFmpeg/FFmpeg), [python-telegram-bot](https://python-telegram-bot.org/), docker and docker-compose.
+Uses python3, [yt-dlp](https://github.com/yt-dlp/yt-dlp), [ffmpeg](https://github.com/FFmpeg/FFmpeg), [python-telegram-bot](https://python-telegram-bot.org/), docker and docker-compose.
 
 The original idea: https://github.com/Spmart/YTAP-Bot
 
