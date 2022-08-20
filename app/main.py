@@ -59,14 +59,14 @@ def get_audio_from_video(id):
     Extract audio with ffmpeg
     """
     audio_filename = f"/tmp/audio-{id}.mp3"
-    cmd = f"ffmpeg -i /tmp/video-{id}.mp4 -q:a 0 -map a {audio_filename}"
+    cmd = f"ffmpeg -i /tmp/video-{id}.mp4 -q:a 0 -af dynaudnorm -map a {audio_filename}"
     try:
         code = subprocess.run(cmd.split())
-        code.check_returncode()
+        exit_code = code.returncode
     except subprocess.CalledProcessError as e:
         logging.error(f"Something went wrong with getting audio from video: {e}")
         return "fail", "fail"
-    return code, audio_filename
+    return exit_code, audio_filename
 
 
 def graceful_fail(bot, message_id, user_id):
